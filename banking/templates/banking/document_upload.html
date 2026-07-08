@@ -8,14 +8,17 @@
         <a href="{% url 'banking:document_list' %}" class="link-muted">← Back to list</a>
     </div>
     <p style="margin-bottom:1.25rem;color:var(--muted);font-size:.9rem;">
-        Documents are automatically embedded with <strong>Voyage AI</strong> and indexed for semantic search.
+        Upload a PDF or paste text. Documents are automatically embedded with
+        <strong>Voyage AI</strong> and indexed for semantic search.
     </p>
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
+        {% if form.non_field_errors %}<ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         {% for field in form %}
         <div class="form-group">
             <label for="{{ field.id_for_label }}">{{ field.label }}</label>
             {{ field }}
+            {% if field.help_text %}<small style="color:var(--muted);display:block;margin-top:.25rem;">{{ field.help_text }}</small>{% endif %}
             {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
         </div>
         {% endfor %}

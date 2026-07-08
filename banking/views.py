@@ -6,6 +6,7 @@ from .forms import DocumentUploadForm, SearchForm, RAGQueryForm
 from .services.embedding_service import generate_embedding
 from .services.vector_search_service import semantic_search
 from .services.rag_service import answer_query
+from .services.pdf_service import extract_text_from_pdf, PDFExtractionError
 
 
 def document_list(request):
@@ -30,9 +31,19 @@ def document_list(request):
 
 def document_upload(request):
     if request.method == 'POST':
-        form = DocumentUploadForm(request.POST)
+        form = DocumentUploadForm(request.POST, request.FILES)
         if form.is_valid():
             document = form.save(commit=False)
+
+            # A PDF upload takes precedence: extract its text into content.
+            pdf = form.cleaned_data.get('pdf_file')
+            if pdf:
+                try:
+                    document.content = extract_text_from_pdf(pdf)
+                except PDFExtractionError as e:
+                    messages.error(request, str(e))
+                    return render(request, 'banking/document_upload.html', {'form': form})
+
             text_to_embed = f"{document.title}\n{document.content}"
             indexed = True
             try:
